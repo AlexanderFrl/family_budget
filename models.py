@@ -5,16 +5,16 @@ from typing import Optional
 class Transaction:
     payer_id:int
     amount:float
-    split_mod: str #
+    split_mode: str #
     split_percent: Optional[float] = None #castom
 
-def calculator_balance(transactions:list[Transaction]) -> dict[int,float]:
+def calculate_balance(transactions:list[Transaction]) -> dict[int,float]:
 
     balance={}
     for t in transactions:
-        if t.split_mod=="solo" or t.split_mod=="pool":
+        if t.split_mode=="solo" or t.split_mode=="pool":
             continue
-        if t.split_mod=="half":
+        if t.split_mode=="half":
             debt = t.amount / 2
         else:
             debt = t.amount * (100 - t.split_percent) / 100
