@@ -110,6 +110,26 @@ async def create_transaction(transaction: TransactionCreate):
         date=date
     )
 
+@app.get("/report/{month}")
+async def get_report(month: str):
+    """Отчет месяца, сумма трат по категориям"""
+    conn = database.get_connection()
+    rows = conn.execute(
+        "SELECT c.name AS category, SUM(t.amount) AS total"
+        " FROM transactions t LEFT JOIN categories c ON t.category_id = c.id"
+        " WHERE t.type = 'expense' AND strftime('%Y-%m', t.date) = ?"
+        " GROUP BY t.category_id"
+        " ORDER BY total DESC",
+        (month,),
+    ).fetchall()
+    conn.close()
+    by_category = [
+        {"category": (r["category"] or "без категории"), "total": r["total"]}
+        for r in rows
+    ]
+    return {"month": month, "by_category": by_category, "total": sum(x["total"] for x in by_category)}
+
+
 
 @app.get("/balance")
 async def get_balance():
