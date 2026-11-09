@@ -13,7 +13,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
       - name: Install deps
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: pytest -v tests/
+        run: |
+          pip install -r requirements.txt
+          pip install allure-pytest
+
+      - name: Run tests with Allure
+        run: pytest -v tests/ --alluredir=./allure-results
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: ./allure-results

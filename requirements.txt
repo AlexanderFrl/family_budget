@@ -1,6 +1,9 @@
+allure-pytest==2.16.2
+allure-python-commons==2.16.2
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
+attrs==26.1.0
 click==8.5.0
 fastapi==0.162.0
 h11==0.16.0
