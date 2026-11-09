@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = "budget.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "budget.db")
 
 def get_connection():
     """Возвращает подключение к БД с включенным FOREIGN KEY"""
@@ -39,15 +39,16 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             payer_id INTEGER NOT NULL,
             category_id INTEGER,
-            amount REAL NOT NULL,
+            amount REAL NOT NULL CHECK (amount > 0),
             type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
             split_mode TEXT NOT NULL DEFAULT 'solo' CHECK (split_mode IN ('solo', 'half', 'custom', 'pool')),
             split_percent REAL,
             date TEXT NOT NULL,
             note TEXT,
-            FOREIGN KEY (payer_id) REFERENCES users(id),
-            FOREIGN KEY (category_id) REFERENCES categories(id)
+            FOREIGN KEY (payer_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
         );
+        CREATE INDEX IF NOT EXISTS idx_tx_payer ON transactions(payer_id);
     """)
     conn.commit()
     conn.close()
