@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
@@ -34,7 +34,49 @@ class TransactionResponse(BaseModel):
     type: str
     split_mode: str
     date: str
+class CategoryCreate(BaseModel):
+    name:str
+    is_shared: int = 0
 
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+    is_shared: int
+
+@app.post("/categories", status_code=201, response_model=CategoryResponse)
+async def create_category(category: CategoryCreate):
+    """Создать категорию"""
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO categories (name, is_shared) VALUES (?, ?)",
+        (category.name, category.is_shared)
+    )
+    conn.commit()
+    category_id = cursor.lastrowid
+    conn.close()
+    return CategoryResponse(id=category_id, name=category.name, is_shared=category.is_shared)
+
+@app.get("/categories", response_model=list[CategoryResponse])
+async def list_category():
+    """Список всех категорий"""
+    conn = database.get_connection()
+    rows = conn.execute("SELECT id, name, is_shared FROM categories").fetchall()
+    conn.close()
+    return [CategoryResponse(id=r["id"], name=r["name"], is_shared=r["is_shared"]) for r in rows]
+
+@app.delete("/categories/{category_id}", status_code=204)
+async def delete_category(category_id: int):
+    """Удалить категорию; если нет 404"""
+    conn = database.get_connection()
+    row = conn.execute("SELECT id FROM categories WHERE id = ?", (category_id,)).fetchone()
+    if row is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail= "Category not found")
+    conn.execute("DELETE FROM categories WHERE id = ?", (category_id,))
+    conn.commit()
+    conn.close()
+    return Response(status_code=204)
 
 @app.post("/transactions", response_model=TransactionResponse)
 async def create_transaction(transaction: TransactionCreate):
